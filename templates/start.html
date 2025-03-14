@@ -20,72 +20,145 @@
                 element.style.display = "none";
             }
         }
+
+        function sendRequest() {
+    const selectedMethods = [];
+    document.querySelectorAll("input[type='checkbox']:checked").forEach(cb => {
+        selectedMethods.push(cb.id);
+    });
+
+    const fileInput = document.getElementById("warehouseConfig");
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("Выберите файл конфигурации склада!");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("methods", JSON.stringify(selectedMethods));
+    formData.append("file", file);
+
+    fetch("/api/distribute", {
+        method: "POST",
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => updateResults(data))
+    .catch(error => console.error("Ошибка:", error));
+}
+
+        function updateResults(data) {
+    let resultsDiv = document.getElementById("results");
+    resultsDiv.innerHTML = "";
+
+    data.forEach(result => {
+        let div = document.createElement("div");
+        div.innerHTML = `<h3>${result.method}</h3>
+                        <p>Score: ${result.score.toFixed(2)}</p>
+                        <p>Затрачено времени: ${result.timeRequired} ms</p>
+                        <button onclick="downloadSolution('${result.method}', ${JSON.stringify(result.solution)})">Скачать JSON</button>`;
+        resultsDiv.appendChild(div);
+    });
+}
     </script>
 </head>
 <body>
-    <h1>Выберите метод распределения</h1>
-    <form>
-        <label><input type="checkbox" id="method1">Случайное размещение<button type="button" onclick="toggleDetails('details1')">Подробнее</button></label>
-        <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения. Показывает наименее эффективное размещение.</div><br>
-        
-        <label><input type="checkbox" id="method2">ELECTRE TRI<button type="button" onclick="toggleDetails('details2')">Подробнее</button></label>
-        <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям (например, приоритетные и менее приоритетные группы). Метод использует концепцию порогов, которые позволяют учитывать чувствительность критериев и степень согласованности решений.</div><br>
-        
-        <label><input type="checkbox" id="method3">TOPSIS<button type="button" onclick="toggleDetails('details3')">Подробнее</button></label>
-        <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы максимально близка к идеальному решению и максимально удалена от анти-идеального решения. В основе лежит предположение, что для каждого критерия существует его идеальное значение (максимальное или минимальное), к которому и должна стремиться каждая альтернатива.</div><br>
-        
-        <label><input type="checkbox" id="method4">ELECTRE TRI + TOPSIS<button type="button" onclick="toggleDetails('details4')">Подробнее</button></label>
-        <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух мощных многокритериальных методов: ELECTRE TRI, который классифицирует товары по категориям на основе их характеристик, и TOPSIS, который помогает выбрать наиболее подходящие решения из предварительно отобранных. Эта комбинация обеспечивает высокую точность и эффективность, поскольку позволяет сначала сузить набор потенциальных решений ELECTRE TRI, а затем выполнить детальную оценку оставшихся вариантов TOPSIS.</div><br>
-        
-        <label><input type="checkbox" id="method5">Genetic Algorithm<button type="button" onclick="toggleDetails('details5')">Подробнее</button></label>
-        <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное к оптимальному решение сложной задачи путем имитации процессов, происходящих в природе: селекции, кроссовера и мутации. В нашей реализации на этапе инициализации создается начальный набор решений. Каждое решение представляет собой отображение товаров на ячейки.</div><br>
-        
-        <h2>Загрузите конфигурацию склада</h2>
-        <input type="file" id="warehouseConfig" accept=".json">
-
-        <a href="/examples/warehouse.json" download>Скачать пример</a>
-
-        
-        <button type="submit">Отправить</button>
-    </form>
-
-    
-
-    <div id="results">
-        <div class="result-block">
-            <h2>Случайное размещение:</h2>
-            <p>Score: <span id="score1">-</span></p>
-            <p>Затрачено времени: <span id="time1">-</span></p>
-            <button>Скачать файл размещения</button>
-        </div>
-        
-        <div class="result-block">
-            <h2>ELECTRE TRI:</h2>
-            <p>Score: <span id="score2">-</span></p>
-            <p>Затрачено времени: <span id="time2">-</span></p>
-            <button>Скачать файл размещения</button>
-        </div>
-
-        <div class="result-block">
-            <h2>РTOPSIS:</h2>
-            <p>Score: <span id="score3">-</span></p>
-            <p>Затрачено времени: <span id="time3">-</span></p>
-            <button>Скачать файл размещения</button>
-        </div>
-
-        <div class="result-block">
-            <h2>ELECTRE TRI + TOPSIS:</h2>
-            <p>Score: <span id="score4">-</span></p>
-            <p>Затрачено времени: <span id="time4">-</span></p>
-            <button>Скачать файл размещения</button>
-        </div>
-
-        <div class="result-block">
-            <h2>Genetic Algorithm:</h2>
-            <p>Score: <span id="score5">-</span></p>
-            <p>Затрачено времени: <span id="time5">-</span></p>
-            <button>Скачать файл размещения</button>
-        </div>
+<h1>Выберите метод распределения</h1>
+<form>
+    <label><input type="checkbox" id="method1">Случайное размещение
+        <button type="button" onclick="toggleDetails('details1')">Подробнее</button>
+    </label>
+    <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения.
+        Показывает наименее эффективное размещение.
     </div>
+    <br>
+
+    <label><input type="checkbox" id="method2">ELECTRE TRI
+        <button type="button" onclick="toggleDetails('details2')">Подробнее</button>
+    </label>
+    <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям
+        (например, приоритетные и менее приоритетные группы). Метод использует концепцию порогов, которые позволяют
+        учитывать чувствительность критериев и степень согласованности решений.
+    </div>
+    <br>
+
+    <label><input type="checkbox" id="method3">TOPSIS
+        <button type="button" onclick="toggleDetails('details3')">Подробнее</button>
+    </label>
+    <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы
+        максимально близка к идеальному решению и максимально удалена от анти-идеального решения. В основе лежит
+        предположение, что для каждого критерия существует его идеальное значение (максимальное или минимальное), к
+        которому и должна стремиться каждая альтернатива.
+    </div>
+    <br>
+
+    <label><input type="checkbox" id="method4">ELECTRE TRI + TOPSIS
+        <button type="button" onclick="toggleDetails('details4')">Подробнее</button>
+    </label>
+    <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух
+        мощных многокритериальных методов: ELECTRE TRI, который классифицирует товары по категориям на основе их
+        характеристик, и TOPSIS, который помогает выбрать наиболее подходящие решения из предварительно отобранных. Эта
+        комбинация обеспечивает высокую точность и эффективность, поскольку позволяет сначала сузить набор потенциальных
+        решений ELECTRE TRI, а затем выполнить детальную оценку оставшихся вариантов TOPSIS.
+    </div>
+    <br>
+
+    <label><input type="checkbox" id="method5">Genetic Algorithm
+        <button type="button" onclick="toggleDetails('details5')">Подробнее</button>
+    </label>
+    <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное к
+        оптимальному решение сложной задачи путем имитации процессов, происходящих в природе: селекции, кроссовера и
+        мутации. В нашей реализации на этапе инициализации создается начальный набор решений. Каждое решение
+        представляет собой отображение товаров на ячейки.
+    </div>
+    <br>
+
+    <h2>Загрузите конфигурацию склада</h2>
+    <input type="file" id="warehouseConfig" accept=".json">
+
+    <a href="/examples/warehouse.json" download>Скачать пример</a>
+
+
+    <button type="submit">Отправить</button>
+</form>
+
+
+<div id="results">
+    <div class="result-block">
+        <h2>Случайное размещение:</h2>
+        <p>Score: <span id="score1">-</span></p>
+        <p>Затрачено времени: <span id="time1">-</span></p>
+        <button>Скачать файл размещения</button>
+    </div>
+
+    <div class="result-block">
+        <h2>ELECTRE TRI:</h2>
+        <p>Score: <span id="score2">-</span></p>
+        <p>Затрачено времени: <span id="time2">-</span></p>
+        <button>Скачать файл размещения</button>
+    </div>
+
+    <div class="result-block">
+        <h2>TOPSIS:</h2>
+        <p>Score: <span id="score3">-</span></p>
+        <p>Затрачено времени: <span id="time3">-</span></p>
+        <button>Скачать файл размещения</button>
+    </div>
+
+    <div class="result-block">
+        <h2>ELECTRE TRI + TOPSIS:</h2>
+        <p>Score: <span id="score4">-</span></p>
+        <p>Затрачено времени: <span id="time4">-</span></p>
+        <button>Скачать файл размещения</button>
+    </div>
+
+    <div class="result-block">
+        <h2>Genetic Algorithm:</h2>
+        <p>Score: <span id="score5">-</span></p>
+        <p>Затрачено времени: <span id="time5">-</span></p>
+        <button>Скачать файл размещения</button>
+    </div>
+</div>
 </body>
 </html>
