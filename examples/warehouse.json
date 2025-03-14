@@ -1,0 +1,27 @@
+{
+  "id": "WH001",
+  "assemblyPoint": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "levels": 6,
+  "cellSize": {
+    "width": 100,
+    "height": 50,
+    "depth": 50
+  },
+  "cells": [
+    {
+      "id": "C_1_1_1",
+      "coordinates": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      },
+      "occupied": false,
+      "lastLoaded": null,
+      "rotationPeriod": 30
+    }
+  ]
+}
