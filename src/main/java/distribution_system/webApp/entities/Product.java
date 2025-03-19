@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Getter
 @Setter
@@ -16,6 +17,10 @@ public class Product implements Comparable<Product> {
     private Map<String, Integer> dimensions; // width, height, depth
     private LocalDate expiryDate;
     private int demand; // уровень востребованности
+
+    public Map<String, Integer> copyDimensions(){
+        return Map.copyOf(this.getDimensions());
+    }
 
     public Map<String, Object> toMap() {
         Map<String, Object> map = new HashMap<>();
@@ -43,7 +48,7 @@ public class Product implements Comparable<Product> {
 
 
     // Метод для генерации товаров
-    public static List<Product> generateProducts(int count) {
+    public static List<Product> generateProducts(long count) {
         List<Product> products = new ArrayList<>();
         Random random = new Random();
         for (int i = 1; i <= count; i++) {
@@ -53,6 +58,22 @@ public class Product implements Comparable<Product> {
                     Map.of("width", 50, "height", 20, "depth", 30),
                     LocalDate.now().plusDays(random.nextInt(365) + 1),
                     random.nextInt(100) + 1
+            ));
+        }
+        return products;
+    }
+
+    // создаст список из продуктов с одинаковым спросом
+    public static List<Product> generateByFirst(long count, Product product) {
+        List<Product> products = new ArrayList<>();
+        Random random = new Random();
+        for (int i = 1; i <= count; i++) {
+            products.add(new Product(
+                    "P" + i,
+                    "Product_" + i,
+                    product.copyDimensions(),
+                    null,
+                    random.nextInt(100) + 1 // если копировать и спрос, то при перестановке не будет никакого эффекта, т.к. цф зависит от спроса товара
             ));
         }
         return products;

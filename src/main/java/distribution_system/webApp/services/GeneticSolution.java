@@ -1,4 +1,4 @@
-package distribution_system.webApp.genetic;
+package distribution_system.webApp.services;
 
 import distribution_system.webApp.entities.*;
 import lombok.Getter;
@@ -52,9 +52,9 @@ public class GeneticSolution extends Solution {
             trainAndSort(population, warehouse);
 
             // Вывод лучшего решения на текущем поколении
-            if (generation % 1000 == 0) {
-                System.out.printf("Поколение %d: Лучший фитнес = %.2f%n", generation, population.get(0).getFitness());
-            }
+//            if (generation % 1000 == 0) {
+//                System.out.printf("Поколение %d: Лучший фитнес = %.2f%n", generation, population.get(0).getFitness());
+//            }
             // Отбор лучших решений (простой выбор двух лучших родителей)
             List<GeneticSolution> parents = List.of(population.get(0), population.get(1));
 

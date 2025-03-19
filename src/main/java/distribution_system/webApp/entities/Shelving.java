@@ -29,7 +29,7 @@ public class Shelving {
                 }
             } else if (HUMAN_LOWER_BOUND <= cellTop && cellTop <= SHOULDER_LEVEL_HEIGHT) {
                 // если вершиной попал
-                double currentRate = (double) (SHOULDER_LEVEL_HEIGHT - cellTop) / (SHOULDER_LEVEL_HEIGHT - HUMAN_LOWER_BOUND);
+                double currentRate = (double) (cellTop - HUMAN_LOWER_BOUND) / (SHOULDER_LEVEL_HEIGHT - HUMAN_LOWER_BOUND);
                 if (maxRate < currentRate) {
                     maxRate = currentRate;
                     bestLevel = i;

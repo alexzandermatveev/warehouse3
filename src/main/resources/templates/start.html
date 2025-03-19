@@ -11,62 +11,13 @@
             margin-left: 20px;
         }
     </style>
-    <script>
-        function toggleDetails(id) {
-            let element = document.getElementById(id);
-            if (element.style.display === "none") {
-                element.style.display = "block";
-            } else {
-                element.style.display = "none";
-            }
-        }
+    <script src="/js/script.js"></script>
 
-        function sendRequest() {
-    const selectedMethods = [];
-    document.querySelectorAll("input[type='checkbox']:checked").forEach(cb => {
-        selectedMethods.push(cb.id);
-    });
-
-    const fileInput = document.getElementById("warehouseConfig");
-    const file = fileInput.files[0];
-
-    if (!file) {
-        alert("Выберите файл конфигурации склада!");
-        return;
-    }
-
-    const formData = new FormData();
-    formData.append("methods", JSON.stringify(selectedMethods));
-    formData.append("file", file);
-
-    fetch("/api/distribute", {
-        method: "POST",
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => updateResults(data))
-    .catch(error => console.error("Ошибка:", error));
-}
-
-        function updateResults(data) {
-    let resultsDiv = document.getElementById("results");
-    resultsDiv.innerHTML = "";
-
-    data.forEach(result => {
-        let div = document.createElement("div");
-        div.innerHTML = `<h3>${result.method}</h3>
-                        <p>Score: ${result.score.toFixed(2)}</p>
-                        <p>Затрачено времени: ${result.timeRequired} ms</p>
-                        <button onclick="downloadSolution('${result.method}', ${JSON.stringify(result.solution)})">Скачать JSON</button>`;
-        resultsDiv.appendChild(div);
-    });
-}
-    </script>
 </head>
 <body>
 <h1>Выберите метод распределения</h1>
 <form>
-    <label><input type="checkbox" id="method1">Случайное размещение
+    <label><input type="checkbox" id="RANDOM">Случайное размещение
         <button type="button" onclick="toggleDetails('details1')">Подробнее</button>
     </label>
     <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения.
@@ -74,7 +25,7 @@
     </div>
     <br>
 
-    <label><input type="checkbox" id="method2">ELECTRE TRI
+    <label><input type="checkbox" id="ELECTRE_TRI">ELECTRE TRI
         <button type="button" onclick="toggleDetails('details2')">Подробнее</button>
     </label>
     <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям
@@ -83,7 +34,7 @@
     </div>
     <br>
 
-    <label><input type="checkbox" id="method3">TOPSIS
+    <label><input type="checkbox" id="TOPSIS">TOPSIS
         <button type="button" onclick="toggleDetails('details3')">Подробнее</button>
     </label>
     <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы
@@ -93,7 +44,7 @@
     </div>
     <br>
 
-    <label><input type="checkbox" id="method4">ELECTRE TRI + TOPSIS
+    <label><input type="checkbox" id="ELECTRE_TRI_TOPSIS">ELECTRE TRI + TOPSIS
         <button type="button" onclick="toggleDetails('details4')">Подробнее</button>
     </label>
     <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух
@@ -104,7 +55,7 @@
     </div>
     <br>
 
-    <label><input type="checkbox" id="method5">Genetic Algorithm
+    <label><input type="checkbox" id="GA">Genetic Algorithm
         <button type="button" onclick="toggleDetails('details5')">Подробнее</button>
     </label>
     <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное к
@@ -117,10 +68,25 @@
     <h2>Загрузите конфигурацию склада</h2>
     <input type="file" id="warehouseConfig" accept=".json">
 
-    <a href="/examples/warehouse.json" download>Скачать пример</a>
+    <a href="/warehouse_ex.json" download>Скачать пример</a>
+    <br>
+    <label><input type="checkbox" id="generateCells">Сгенерировать ячейки
+        <input type="number" id="cellsAmount" min="1" step="1" value="100">Количество ячеек</input>
+        <div id="details6" class="details" style="display:block" onclick="toggleDetails('details6')"> Если в файле json указан список products и он не пуст, то будет
+            сгенерировано n товаров по примеру первого товара из списка.
+        </div>
+    </label>
+    <br>
 
+    <label ><input type="checkbox" id="generateProducts">Сгенерировать товары
+        <input type="number" id="productsAmount" min="1" step="1" value="100">Количество товаров</input>
+        <div id="details7" class="details" style="display:block" onclick="toggleDetails('details7')"> Если в файле json указан список products и он не пуст, то будет
+            сгенерировано n товаров по примеру первого товара из списка.
+        </div>
+    </label>
+    <br>
 
-    <button type="submit">Отправить</button>
+    <button type="button" onclick="sendRequest()">Отправить</button>
 </form>
 
 

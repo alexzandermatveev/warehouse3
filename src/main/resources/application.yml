@@ -6,7 +6,7 @@ spring:
     name: webApp
 
     thymeleaf:
-      prefix: classpath:/templates/
+      prefix: classpath:src/main/resources/templates
       suffix: .html
       mode: HTML
       enabled: false

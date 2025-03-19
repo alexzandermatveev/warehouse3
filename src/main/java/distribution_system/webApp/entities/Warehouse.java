@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,7 +21,8 @@ public class Warehouse {
     private final Map<String, Integer> cellSize;
     private final int levels;
     private final Shelving shelving;
-    private final long totalCells;
+    @Setter
+    private long totalCells;
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -50,6 +52,7 @@ public class Warehouse {
     }
 
     public void generateCells(){
+        this.cells.clear();
         this.cells.addAll(Cell.generateCells(totalCells, levels));
     }
 
