@@ -1,11 +1,14 @@
 package distribution_system.webApp.entities;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.*;
 
 @Getter
+@ToString
 public class Cell implements Cloneable, Comparable<Cell> {
     private String id;
     private Map<String, Integer> coordinates;
@@ -13,12 +16,19 @@ public class Cell implements Cloneable, Comparable<Cell> {
     private LocalDateTime lastLoaded;
     private int rotationPeriod;
 
+
+//    @JsonValue
+//    public String toJson(){
+//        return id;
+//    }
+
     public Cell(String id, int x, int y, int z, int rotationPeriod) {
         this.id = id;
         this.coordinates = Map.of("x", x, "y", y, "z", z);
         this.rotationPeriod = rotationPeriod;
         this.occupied = false;
     }
+
 
 
     public void updateOccupiedStatus(boolean occupied) {

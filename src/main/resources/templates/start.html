@@ -7,11 +7,22 @@
 
     <style>
         .details {
-            display: none;
-            margin-left: 20px;
+        display: none;
         }
     </style>
+
+
     <script src="/js/script.js"></script>
+
+
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
+
 
 </head>
 <body>
@@ -67,6 +78,7 @@
 
     <h2>Загрузите конфигурацию склада</h2>
     <input type="file" id="warehouseConfig" accept=".json">
+    <button type="button" onclick="clearJson()">Очистить</button>
 
     <a href="/warehouse_ex.json" download>Скачать пример</a>
     <br>
@@ -86,7 +98,13 @@
     </label>
     <br>
 
-    <button type="button" onclick="sendRequest()">Отправить</button>
+    <h2>Отредактируйте конфигурацию</h2>
+    <textarea id="jsonTextArea"></textarea>
+    <p id="jsonError" style="color: red;"></p>
+<!--    <textarea id="jsonTextArea" rows="10" cols="50"></textarea>-->
+    <br>
+
+    <button type="button" onclick="sendRequest()" id="sendButton">Отправить</button>
 </form>
 
 

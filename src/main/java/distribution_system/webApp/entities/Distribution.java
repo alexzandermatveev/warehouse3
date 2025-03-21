@@ -223,10 +223,10 @@ public class Distribution {
         return distances;
     }
 
-    private static double getElectreThreshold(List<Cell> cells, Product product, Warehouse warehouse) {
+    private static double getElectreThreshold(List<Cell> cells, Product product, Warehouse warehouse, double coefficient) {
         // Здесь коэффициент имеет решающее значение. Чем он меньше,
         // тем точнее должны быть подобраны ячейки, но есть риск, что отобранных ячеек окажется меньше необходимого
-        return 0.3 * cells.stream()
+        return coefficient * cells.stream()
                 .map(cell -> calculateELECTREScore(cell, product, warehouse))
                 .max(Double::compareTo)
                 .orElse(Double.MAX_VALUE); // т.к. это минимальный порог
@@ -245,17 +245,22 @@ public class Distribution {
         Map<Product, List<Cell>> filteredCells = new HashMap<>();
         for (Product product : products) {
             List<Cell> candidateCells = new ArrayList<>();
-            for (Cell cell : cells) {
-                if (!cell.isOccupied()) {
-                    double score = calculateELECTREScore(cell, product, warehouse);
-                    if (score < getElectreThreshold(cells, product, warehouse)) { // пороговое значения для ELECTRE TRI
-                        candidateCells.add(cell);
+            double thresholdCoefficient = 0.2;
+            do {
+                thresholdCoefficient += 0.1; // каждую итерацию повышаем предел для большего отбора ячеек
+                candidateCells = new ArrayList<>();
+                for (Cell cell : cells) {
+                    if (!cell.isOccupied()) {
+                        double score = calculateELECTREScore(cell, product, warehouse);
+                        if (score < getElectreThreshold(cells, product, warehouse, thresholdCoefficient)) { // пороговое значения для ELECTRE TRI
+                            candidateCells.add(cell);
+                        }
                     }
                 }
-            }
-            if (candidateCells.isEmpty()) {
-                throw new IllegalStateException("Для товара " + product.getId() + " не найдены подходящие ячейки (ELECTRE TRI).");
-            }
+            } while (candidateCells.isEmpty());
+//            if (candidateCells.isEmpty()) {
+//                throw new IllegalStateException("Для товара " + product.getId() + " не найдены подходящие ячейки (ELECTRE TRI).");
+//            }
             filteredCells.put(product, candidateCells);
         }
 

@@ -70,7 +70,7 @@ public class DistributionService {
             long startTime = System.currentTimeMillis();
             Results results = switch (method) {
                 case RANDOM -> {
-                    Results results1 = Distribution.distributeProductsRandomly(Warehouse.copy(warehouse), products);
+                    Results results1 = Distribution.distributeProductsRandomly(Warehouse.copy(warehouse), new ArrayList<>(products));
                     results1.setTimeRequired(System.currentTimeMillis() - startTime);
                     yield results1;
                 }
