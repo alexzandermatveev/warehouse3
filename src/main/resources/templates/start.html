@@ -98,6 +98,38 @@
     </label>
     <br>
 
+    <button type="button" onclick="downloadEditorJson()">Скачать конфигурацию JSON</button>
+    <br>
+
+    <h3><button type="button" onclick="toggleConstructor()" id="openConstructor">Открыть конструктор склада</button></h3>
+<div id="warehouseConstructor" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+
+    <label>ID склада:
+        <input type="text" id="whId" value="WH001">
+    </label><br>
+
+    <label>Точка комплектации (assemblyPoint):</label><br>
+    x: <input type="number" id="apX" value="0">
+    y: <input type="number" id="apY" value="0">
+    z: <input type="number" id="apZ" value="0"><br>
+
+    <label>Количество уровней:
+        <input type="number" id="levels" value="6">
+    </label><br>
+
+    <label>Общее количество ячеек:
+        <input type="number" id="totalCells" value="600">
+    </label><br>
+
+    <label>Размер ячейки:</label><br>
+    ширина: <input type="number" id="cellWidth" value="100">
+    высота: <input type="number" id="cellHeight" value="50">
+    глубина: <input type="number" id="cellDepth" value="50"><br><br>
+
+    <button type="button" onclick="generateJsonFromConstructor()">Сгенерировать конфигурацию</button>
+</div>
+
+
     <h2>Отредактируйте конфигурацию</h2>
     <textarea id="jsonTextArea"></textarea>
     <p id="jsonError" style="color: red;"></p>

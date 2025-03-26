@@ -1,9 +1,10 @@
+'use strict';
 let fileLoaded = false; // Флаг, загружался ли JSON из файла
 
 
 document.addEventListener("DOMContentLoaded", function () {
     const jsonError = document.getElementById("jsonError");
-// Подключаем CodeMirror к textarea
+    // Подключаем CodeMirror к textarea
     const editor = CodeMirror.fromTextArea(document.getElementById("jsonTextArea"), {
         mode: { name: "javascript", json: true },
         theme: "default",
@@ -11,6 +12,58 @@ document.addEventListener("DOMContentLoaded", function () {
         autoCloseBrackets: true,
         matchBrackets: true,
     });
+
+    function toggleConstructor() {
+        const constructorDiv = document.getElementById("warehouseConstructor");
+        constructorDiv.style.display = constructorDiv.style.display === "none" ? "block" : "none";
+    }
+
+    function generateJsonFromConstructor() {
+        const config = {
+            Warehouse: {
+                id: document.getElementById("whId").value,
+                assemblyPoint: {
+                    x: parseInt(document.getElementById("apX").value),
+                    y: parseInt(document.getElementById("apY").value),
+                    z: parseInt(document.getElementById("apZ").value)
+                },
+                levels: parseInt(document.getElementById("levels").value),
+                totalCells: parseInt(document.getElementById("totalCells").value),
+                cellSize: {
+                    width: parseInt(document.getElementById("cellWidth").value),
+                    height: parseInt(document.getElementById("cellHeight").value),
+                    depth: parseInt(document.getElementById("cellDepth").value)
+                },
+                cells: []
+            },
+            products: []
+        };
+
+        const formattedJson = JSON.stringify(config, null, 2);
+        editor.setValue(formattedJson); // вставляем в CodeMirror
+    }
+
+
+
+
+    function downloadEditorJson() {
+        const jsonContent = editor.getValue(); // Получаем JSON из CodeMirror
+
+        try {
+            // Проверим, валидный ли JSON
+            JSON.parse(jsonContent);
+
+            const blob = new Blob([jsonContent], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "warehouse_config.json";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (e) {
+            alert("содержимое редактора не является корректным JSON!");
+        }
+    }
 
 
     function toggleDetails(id) {
@@ -25,17 +78,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-        function validateJson() {
-                try {
-                    JSON.parse(editor.getValue());
-                    jsonError.textContent = ""; // Если JSON валиден, очищаем сообщение
-                } catch (error) {
-                    jsonError.textContent = "Ошибка: введенные данные не являются корректным JSON!";
-                }
-            }
+    function validateJson() {
+        try {
+            JSON.parse(editor.getValue());
+            jsonError.textContent = ""; // Если JSON валиден, очищаем сообщение
+        } catch (error) {
+            jsonError.textContent = "Ошибка: введенные данные не являются корректным JSON!";
+        }
+    }
 
-            // Проверяем JSON при каждом изменении
-            editor.on("change", validateJson);
+    // Проверяем JSON при каждом изменении
+    editor.on("change", validateJson);
 
 
 
@@ -46,7 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
             fileInput.value = ""; // Сбрасываем input type="file"
             fileLoaded = false; // Сбрасываем флаг
         }
-        else{
+        else {
             document.getElementById("warehouseConfig").value = "";
         }
     }
@@ -111,9 +164,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(requestData)
             })
-            .then(response => response.json())
-            .then(data => updateResults(data))
-            .catch(error => console.error("Ошибка запроса:", error));
+                .then(async response => {
+                                          if (!response.ok) {
+                                              const errorText = await response.text(); // Получаем тело ошибки
+                                              throw new Error(`Ошибка:\n${errorText}`);
+                                          }
+                                          return response.json();
+                                      })
+                .then(data => updateResults(data))
+                .catch(error => { console.error("Ошибка запроса:", error);
+                                          alert(error.message);
+                });
         } catch (error) {
             alert("Ошибка: введенные данные не являются корректным JSON!");
         }
@@ -167,9 +228,14 @@ document.addEventListener("DOMContentLoaded", function () {
     // Привязываем кнопку "Отправить"
     document.getElementById("sendButton").addEventListener("click", sendRequest);
 
+    // document.getElementById("openConstructor").addEventListener("click", toggleConstructor);
+
 
     // Делаем функции глобальными (если нужно вызывать их в HTML)
     window.toggleDetails = toggleDetails;
     window.clearJson = clearJson;
     window.downloadSolution = downloadSolution;
+    window.generateJsonFromConstructor = generateJsonFromConstructor;
+    window.toggleConstructor = toggleConstructor;
+    window.downloadEditorJson = downloadEditorJson;
 });
