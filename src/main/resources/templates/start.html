@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +8,7 @@
 
     <style>
         .details {
-        display: none;
+            display: none;
         }
     </style>
 
@@ -17,164 +18,194 @@
 
     <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/material-darker.min.css">
 
     <!-- CodeMirror JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/javascript/javascript.min.js"></script>
 
+    <!-- plotly -->
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+
 
 </head>
+
 <body>
-<h1>Выберите метод распределения</h1>
-<form>
-    <label><input type="checkbox" id="RANDOM">Случайное размещение
-        <button type="button" onclick="toggleDetails('details1')">Подробнее</button>
-    </label>
-    <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения.
-        Показывает наименее эффективное размещение.
-    </div>
-    <br>
-
-    <label><input type="checkbox" id="ELECTRE_TRI">ELECTRE TRI
-        <button type="button" onclick="toggleDetails('details2')">Подробнее</button>
-    </label>
-    <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям
-        (например, приоритетные и менее приоритетные группы). Метод использует концепцию порогов, которые позволяют
-        учитывать чувствительность критериев и степень согласованности решений.
-    </div>
-    <br>
-
-    <label><input type="checkbox" id="TOPSIS">TOPSIS
-        <button type="button" onclick="toggleDetails('details3')">Подробнее</button>
-    </label>
-    <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы
-        максимально близка к идеальному решению и максимально удалена от анти-идеального решения. В основе лежит
-        предположение, что для каждого критерия существует его идеальное значение (максимальное или минимальное), к
-        которому и должна стремиться каждая альтернатива.
-    </div>
-    <br>
-
-    <label><input type="checkbox" id="ELECTRE_TRI_TOPSIS">ELECTRE TRI + TOPSIS
-        <button type="button" onclick="toggleDetails('details4')">Подробнее</button>
-    </label>
-    <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух
-        мощных многокритериальных методов: ELECTRE TRI, который классифицирует товары по категориям на основе их
-        характеристик, и TOPSIS, который помогает выбрать наиболее подходящие решения из предварительно отобранных. Эта
-        комбинация обеспечивает высокую точность и эффективность, поскольку позволяет сначала сузить набор потенциальных
-        решений ELECTRE TRI, а затем выполнить детальную оценку оставшихся вариантов TOPSIS.
-    </div>
-    <br>
-
-    <label><input type="checkbox" id="GA">Genetic Algorithm
-        <button type="button" onclick="toggleDetails('details5')">Подробнее</button>
-    </label>
-    <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное к
-        оптимальному решение сложной задачи путем имитации процессов, происходящих в природе: селекции, кроссовера и
-        мутации. В нашей реализации на этапе инициализации создается начальный набор решений. Каждое решение
-        представляет собой отображение товаров на ячейки.
-    </div>
-    <br>
-
-    <h2>Загрузите конфигурацию склада</h2>
-    <input type="file" id="warehouseConfig" accept=".json">
-    <button type="button" onclick="clearJson()">Очистить</button>
-
-    <a href="/warehouse_ex.json" download>Скачать пример</a>
-    <br>
-    <label><input type="checkbox" id="generateCells">Сгенерировать ячейки
-        <input type="number" id="cellsAmount" min="1" step="1" value="100">Количество ячеек</input>
-        <div id="details6" class="details" style="display:block" onclick="toggleDetails('details6')"> Если в файле json указан список products и он не пуст, то будет
-            сгенерировано n товаров по примеру первого товара из списка.
+    <h1>Выберите метод распределения</h1>
+    <form>
+        <label><input type="checkbox" id="RANDOM">Случайное размещение
+            <button type="button" onclick="toggleDetails('details1')">Подробнее</button>
+        </label>
+        <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения.
+            Показывает наименее эффективное размещение.
         </div>
-    </label>
-    <br>
+        <br>
 
-    <label ><input type="checkbox" id="generateProducts">Сгенерировать товары
-        <input type="number" id="productsAmount" min="1" step="1" value="100">Количество товаров</input>
-        <div id="details7" class="details" style="display:block" onclick="toggleDetails('details7')"> Если в файле json указан список products и он не пуст, то будет
-            сгенерировано n товаров по примеру первого товара из списка.
+        <label><input type="checkbox" id="ELECTRE_TRI">ELECTRE TRI
+            <button type="button" onclick="toggleDetails('details2')">Подробнее</button>
+        </label>
+        <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям
+            (например, приоритетные и менее приоритетные группы). Метод использует концепцию порогов, которые позволяют
+            учитывать чувствительность критериев и степень согласованности решений.
         </div>
-    </label>
-    <br>
+        <br>
 
-    <button type="button" onclick="downloadEditorJson()">Скачать конфигурацию JSON</button>
-    <br>
+        <label><input type="checkbox" id="TOPSIS">TOPSIS
+            <button type="button" onclick="toggleDetails('details3')">Подробнее</button>
+        </label>
+        <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы
+            максимально близка к идеальному решению и максимально удалена от анти-идеального решения. В основе лежит
+            предположение, что для каждого критерия существует его идеальное значение (максимальное или минимальное), к
+            которому и должна стремиться каждая альтернатива.
+        </div>
+        <br>
 
-    <h3><button type="button" onclick="toggleConstructor()" id="openConstructor">Открыть конструктор склада</button></h3>
-<div id="warehouseConstructor" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+        <label><input type="checkbox" id="ELECTRE_TRI_TOPSIS">ELECTRE TRI + TOPSIS
+            <button type="button" onclick="toggleDetails('details4')">Подробнее</button>
+        </label>
+        <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух
+            мощных многокритериальных методов: ELECTRE TRI, который классифицирует товары по категориям на основе их
+            характеристик, и TOPSIS, который помогает выбрать наиболее подходящие решения из предварительно отобранных.
+            Эта
+            комбинация обеспечивает высокую точность и эффективность, поскольку позволяет сначала сузить набор
+            потенциальных
+            решений ELECTRE TRI, а затем выполнить детальную оценку оставшихся вариантов TOPSIS.
+        </div>
+        <br>
 
-    <label>ID склада:
-        <input type="text" id="whId" value="WH001">
-    </label><br>
+        <label><input type="checkbox" id="GA">Genetic Algorithm
+            <button type="button" onclick="toggleDetails('details5')">Подробнее</button>
+        </label>
+        <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное
+            к
+            оптимальному решение сложной задачи путем имитации процессов, происходящих в природе: селекции, кроссовера и
+            мутации. В нашей реализации на этапе инициализации создается начальный набор решений. Каждое решение
+            представляет собой отображение товаров на ячейки.
+        </div>
+        <br>
 
-    <label>Точка комплектации (assemblyPoint):</label><br>
-    x: <input type="number" id="apX" value="0">
-    y: <input type="number" id="apY" value="0">
-    z: <input type="number" id="apZ" value="0"><br>
+        <h2>Загрузите конфигурацию склада</h2>
+        <input type="file" id="warehouseConfig" accept=".json">
+        <button type="button" onclick="clearJson()">Очистить</button>
 
-    <label>Количество уровней:
-        <input type="number" id="levels" value="6">
-    </label><br>
+        <a href="/warehouse_ex.json" download>Скачать пример</a>
+        <br>
+        <label><input type="checkbox" id="generateCells">Сгенерировать ячейки
+            <input type="number" id="cellsAmount" min="1" step="1" value="100">Количество ячеек</input>
+            <div id="details6" class="details" style="display:block" onclick="toggleDetails('details6')"> Если в файле
+                json указан список products и он не пуст, то будет
+                сгенерировано n товаров по примеру первого товара из списка.
+            </div>
+        </label>
+        <br>
 
-    <label>Общее количество ячеек:
-        <input type="number" id="totalCells" value="600">
-    </label><br>
+        <label><input type="checkbox" id="generateProducts">Сгенерировать товары
+            <input type="number" id="productsAmount" min="1" step="1" value="100">Количество товаров</input>
+            <div id="details7" class="details" style="display:block" onclick="toggleDetails('details7')"> Если в файле
+                json указан список products и он не пуст, то будет
+                сгенерировано n товаров по примеру первого товара из списка.
+            </div>
+        </label>
+        <br>
 
-    <label>Размер ячейки:</label><br>
-    ширина: <input type="number" id="cellWidth" value="100">
-    высота: <input type="number" id="cellHeight" value="50">
-    глубина: <input type="number" id="cellDepth" value="50"><br><br>
+        <button type="button" onclick="downloadEditorJson()">Скачать конфигурацию JSON</button>
+        <br>
 
-    <button type="button" onclick="generateJsonFromConstructor()">Сгенерировать конфигурацию</button>
-</div>
+        <h3><button type="button" onclick="toggleConstructor()" id="openConstructor">Открыть конструктор склада</button>
+        </h3>
+        <div id="warehouseConstructor" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
+
+            <label>ID склада:
+                <input type="text" id="whId" value="WH001">
+            </label><br>
+
+            <label>Точка комплектации (assemblyPoint):</label><br>
+            x: <input type="number" id="apX" value="0">
+            y: <input type="number" id="apY" value="0">
+            z: <input type="number" id="apZ" value="0"><br>
+
+            <label>Количество уровней:
+                <input type="number" id="levels" value="6">
+            </label><br>
+
+            <label>Общее количество ячеек:
+                <input type="number" id="totalCells" value="100">
+            </label><br>
+
+            <label>Размер ячейки:</label><br>
+            ширина: <input type="number" id="cellWidth" value="100">
+            высота: <input type="number" id="cellHeight" value="50">
+            глубина: <input type="number" id="cellDepth" value="50"><br><br>
+
+            <button type="button" onclick="generateJsonFromConstructor()">Сгенерировать конфигурацию</button>
+        </div>
 
 
-    <h2>Отредактируйте конфигурацию</h2>
-    <textarea id="jsonTextArea"></textarea>
-    <p id="jsonError" style="color: red;"></p>
-<!--    <textarea id="jsonTextArea" rows="10" cols="50"></textarea>-->
-    <br>
+        <h2>Отредактируйте конфигурацию</h2>
+        <textarea id="jsonTextArea"></textarea>
+        <p id="jsonError" style="color: red;"></p>
+        <!--    <textarea id="jsonTextArea" rows="10" cols="50"></textarea>-->
+        <br>
 
-    <button type="button" onclick="sendRequest()" id="sendButton">Отправить</button>
-</form>
+        <button type="button" id="sendButton">Отправить</button>
+    </form>
 
 
-<div id="results">
-    <div class="result-block">
-        <h2>Случайное размещение:</h2>
-        <p>Score: <span id="score1">-</span></p>
-        <p>Затрачено времени: <span id="time1">-</span></p>
-        <button>Скачать файл размещения</button>
+    <div id="3d_charts">
+        <h3>План распределения</h3>
+
+        <div id="warehouse3d_RANDOM" style="width: 100%; height: 600px; display: none;"></div>
+        <div id="warehouse3d_ELECTRE_TRI" style="width: 100%; height: 600px;  display: none;"></div>
+        <div id="warehouse3d_TOPSIS" style="width: 100%; height: 600px;  display: none;"></div>
+        <div id="warehouse3d_ELECTRE_TRI_TOPSIS" style="width: 100%; height: 600px;  display: none;"></div>
+        <div id="warehouse3d_GA" style="width: 100%; height: 600px;  display: none;"></div>
     </div>
 
-    <div class="result-block">
-        <h2>ELECTRE TRI:</h2>
-        <p>Score: <span id="score2">-</span></p>
-        <p>Затрачено времени: <span id="time2">-</span></p>
-        <button>Скачать файл размещения</button>
-    </div>
 
-    <div class="result-block">
-        <h2>TOPSIS:</h2>
-        <p>Score: <span id="score3">-</span></p>
-        <p>Затрачено времени: <span id="time3">-</span></p>
-        <button>Скачать файл размещения</button>
-    </div>
+    <h3>Сравнение Score и времени выполнения</h3>
 
-    <div class="result-block">
-        <h2>ELECTRE TRI + TOPSIS:</h2>
-        <p>Score: <span id="score4">-</span></p>
-        <p>Затрачено времени: <span id="time4">-</span></p>
-        <button>Скачать файл размещения</button>
-    </div>
+    <div id="scoreChart" style="width: 600px; height: 400px;"></div>
+    <div id="timeChart" style="width: 600px; height: 400px;"></div>
 
-    <div class="result-block">
-        <h2>Genetic Algorithm:</h2>
-        <p>Score: <span id="score5">-</span></p>
-        <p>Затрачено времени: <span id="time5">-</span></p>
-        <button>Скачать файл размещения</button>
+
+
+    <div id="results">
+        <div class="result-block">
+            <h2>Случайное размещение:</h2>
+            <p>Score: <span id="score1">-</span></p>
+            <p>Затрачено времени: <span id="time1">-</span></p>
+            <button>Скачать файл размещения</button>
+        </div>
+
+        <div class="result-block">
+            <h2>ELECTRE TRI:</h2>
+            <p>Score: <span id="score2">-</span></p>
+            <p>Затрачено времени: <span id="time2">-</span></p>
+            <button>Скачать файл размещения</button>
+        </div>
+
+        <div class="result-block">
+            <h2>TOPSIS:</h2>
+            <p>Score: <span id="score3">-</span></p>
+            <p>Затрачено времени: <span id="time3">-</span></p>
+            <button>Скачать файл размещения</button>
+        </div>
+
+        <div class="result-block">
+            <h2>ELECTRE TRI + TOPSIS:</h2>
+            <p>Score: <span id="score4">-</span></p>
+            <p>Затрачено времени: <span id="time4">-</span></p>
+            <button>Скачать файл размещения</button>
+        </div>
+
+        <div class="result-block">
+            <h2>Genetic Algorithm:</h2>
+            <p>Score: <span id="score5">-</span></p>
+            <p>Затрачено времени: <span id="time5">-</span></p>
+            <button>Скачать файл размещения</button>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

@@ -16,7 +16,7 @@ public class Product implements Comparable<Product> {
     private String name;
     private Map<String, Integer> dimensions; // width, height, depth
     private LocalDate expiryDate;
-    private int demand; // уровень востребованности
+    private int demand; // уровень востребованности от 0 до 100
 
     public Map<String, Integer> copyDimensions(){
         return Map.copyOf(this.getDimensions());

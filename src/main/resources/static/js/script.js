@@ -1,6 +1,11 @@
 'use strict';
 let fileLoaded = false; // Флаг, загружался ли JSON из файла
-
+//точка сбора
+let assemblyPoint = {
+    "x": 0,
+    "y": 0,
+    "z": 0
+};
 
 document.addEventListener("DOMContentLoaded", function () {
     const jsonError = document.getElementById("jsonError");
@@ -146,6 +151,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         try {
             const jsonData = JSON.parse(jsonText); // Проверяем, что JSON валиден
+
+            //перезаписываем точку сбора
+            assemblyPoint = jsonData.Warehouse.assemblyPoint;
+
             const requestData = {
                 methods: selectedMethods,
                 warehouseConfig: jsonData // JSON, а не строка
@@ -165,15 +174,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: JSON.stringify(requestData)
             })
                 .then(async response => {
-                                          if (!response.ok) {
-                                              const errorText = await response.text(); // Получаем тело ошибки
-                                              throw new Error(`Ошибка:\n${errorText}`);
-                                          }
-                                          return response.json();
-                                      })
+                    if (!response.ok) {
+                        const errorText = await response.text(); // Получаем тело ошибки
+                        throw new Error(`Ошибка:\n${errorText}`);
+                    }
+                    return response.json();
+                })
                 .then(data => updateResults(data))
-                .catch(error => { console.error("Ошибка запроса:", error);
-                                          alert(error.message);
+                .catch(error => {
+                    console.error("Ошибка запроса:", error);
+                    alert(error.message);
                 });
         } catch (error) {
             alert("Ошибка: введенные данные не являются корректным JSON!");
@@ -181,6 +191,12 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateResults(data) {
+        //console.log("Данные в updateResults", data);
+
+        buildCharts(data);
+        data.forEach(solution => {
+            build3DWarehouse(solution.method, solution.solution);
+        });
         let resultsDiv = document.getElementById("results");
         resultsDiv.innerHTML = "";
 
@@ -205,6 +221,128 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+
+    function buildCharts(data) {
+
+        //console.log("Данные для построения графиков:", data); // Проверка данных
+        // Данные для графиков
+        data.sort((a, b) => b.score - a.score);
+
+        const methods = data.map(result => result.method);
+        const scores = data.map(result => result.score);
+
+        let layout = {
+            title: { text: "Показатель работы для каждого плана" },
+            xaxis: {
+                tickangle: -45
+            },
+        };
+
+        Plotly.newPlot("scoreChart", [{
+            x: methods,
+            y: scores,
+            type: "bar",
+            name: "Score",
+            marker: { color: "teal" }
+        }], layout);
+
+
+
+        data.sort((a, b) => b.timeRequired - a.timeRequired);
+
+        const methods2 = data.map(result => result.method);
+        const times2 = data.map(result => result.timeRequired);
+
+        layout.title.text = "Затраченное на решение время, мс";
+        layout["yaxis"] = { title: { text: "Время, мс" } };
+        console.log(layout);
+
+        Plotly.newPlot("timeChart", [{
+            x: methods2,
+            y: times2,
+            type: "bar",
+            name: "Время, мс",
+            marker: { color: "orange" }
+        }], layout);
+    }
+
+
+
+
+    function build3DWarehouse(method, data) {
+        let maxDist = 0;
+        let minDist = Infinity;
+
+
+
+        // Вычисляем max и min расстояния
+        for (const pair of data) {
+            const cell = pair.cell;
+            const dist = Math.abs(cell.coordinates.x - assemblyPoint.x) + Math.abs(cell.coordinates.y - assemblyPoint.y) +
+                Math.abs(cell.coordinates.x - assemblyPoint.z);
+            if (dist > maxDist) maxDist = dist;
+            if (dist < minDist) minDist = dist;
+        }
+
+        // Данные для графика
+        const x = data.map(pair => pair.cell.coordinates.x);
+        const y = data.map(pair => pair.cell.coordinates.y);
+        const z = data.map(pair => pair.cell.coordinates.z);
+
+        // Распределение по кластерам (по расстоянию)
+        const clusters = data.map(pair => {
+            const cell = pair.cell;
+            const relDist = (maxDist - (Math.abs(assemblyPoint.x - cell.coordinates.x) + Math.abs(assemblyPoint.y - cell.coordinates.y) + Math.abs(assemblyPoint.z - cell.coordinates.z))) / (maxDist - minDist);
+            if (relDist <= 0.2) {
+                cell.cluster = "A";
+                return "red";
+            }
+            else if (relDist > 0.2 && relDist <= 0.3) {
+                cell.cluster = "B";
+                return "green";
+            }
+            else {
+                cell.cluster = "C";
+                return "blue";
+            }
+        });
+
+        // Создаём новый div для каждого метода
+        const divId = `warehouse3d_${method}`;
+        let container = document.getElementById(divId);
+        if (!container) {
+            container = document.createElement("div");
+            container.id = divId;
+            container.style = "width: 100%; height: 500px; margin-bottom: 20px;";
+            document.getElementById("3d_charts").appendChild(container); // Добавляем в родительский контейнер
+        } else container.style.display = "block";
+
+        // Построение 3D графика для метода
+        Plotly.newPlot(divId, [{
+            x: x,
+            y: y,
+            z: z,
+            mode: "markers",
+            type: "scatter3d",
+            marker: {
+                size: 6,
+                color: clusters, // Массив кластеров (A, B, C)
+                colorscale: "Viridis", // Цветовая шкала
+                opacity: 0.8
+            },
+            text: data.map(cell => `Ячейка: ${cell.cell.id}<br>Кластер: ${cell.cell.cluster}`)
+        }], {
+            title: { text: `3D Визуализация склада для метода ${method}` },
+            scene: {
+                xaxis: { title: "X" },
+                yaxis: { title: "Y" },
+                zaxis: { title: "Z" }
+            },
+            showlegend: true
+        });
+    }
+
+
 
     function downloadSolution(method, solution) {
         try {
