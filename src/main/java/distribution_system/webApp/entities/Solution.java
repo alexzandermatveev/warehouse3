@@ -6,7 +6,7 @@ import java.util.*;
 
 @Getter
 public class Solution {
-    private Map<Cell, Product> mapping;
+    protected Map<Cell, Product> mapping;
 
     public Solution() {
         mapping = new HashMap<>();

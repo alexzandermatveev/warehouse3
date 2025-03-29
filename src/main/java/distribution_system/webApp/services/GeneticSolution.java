@@ -8,12 +8,11 @@ import java.util.*;
 
 @Getter
 public class GeneticSolution extends Solution {
-    private Map<Cell, Product> mapping;
     @Setter
     private double fitness;
 
     public GeneticSolution() {
-        this.mapping = new HashMap<>();
+        super();
         this.fitness = Double.MAX_VALUE;
     }
 

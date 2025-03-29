@@ -126,6 +126,7 @@ public class DistributionService {
                 case GA -> {
                     GeneticSolution solution = GeneticSolution.runGeneticAlgorithm(Warehouse.copy(warehouse),
                             new ArrayList<>(products), 5, 100);
+                    System.out.println("test: " + solution.prepareForJSON());
                     yield new Results(DistributionMethods.GA, solution.getFitness(),
                             System.currentTimeMillis() - startTime, solution);
                 }
