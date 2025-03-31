@@ -195,7 +195,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         buildCharts(data);
         data.forEach(solution => {
-            build3DWarehouse(solution.method, solution.solution);
+            build3DWarehouse(solution.method, solution.solution, solution.relativeShelving);
         });
         let resultsDiv = document.getElementById("results");
         resultsDiv.innerHTML = "";
@@ -269,9 +269,29 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-    function build3DWarehouse(method, data) {
+    function build3DWarehouse(method, data, relativeShelving) {
+        // мин/макс для последующей нормализации расстояния
         let maxDist = 0;
         let minDist = Infinity;
+        // вес для учета относительного уровня ячейки
+        const levelWeight = 0.3;
+        // верхнии границы классов для ABC анализа (спрос, расстояние)
+        const classA = 0.2;
+        const classB = 0.3;
+
+        // границы классов для ABC анализа (срок годности). Временные промежутки    
+        class TimeInterval {
+            constructor(days) {
+                this.days = days;
+                this.milliseconds = days * 24 * 60 * 60 * 1000; // Преобразуем дни в миллисекунды
+            }
+        }
+        const shortTerm = new TimeInterval(2) // скоропорт 0,5 до 30 суток
+        const midTerm = new TimeInterval(30) // среднесрок от 30 до 180 суток
+        // const longTerm = new TimeInterval(190) // долгосрок 
+        // общая точка отсчета (текущее время)
+        const currentTime = new Date();
+
 
 
 
@@ -279,25 +299,78 @@ document.addEventListener("DOMContentLoaded", function () {
         for (const pair of data) {
             const cell = pair.cell;
             const dist = Math.abs(cell.coordinates.x - assemblyPoint.x) + Math.abs(cell.coordinates.y - assemblyPoint.y) +
-                Math.abs(cell.coordinates.x - assemblyPoint.z);
+                levelWeight * relativeShelving[cell.coordinates.z];
             if (dist > maxDist) maxDist = dist;
             if (dist < minDist) minDist = dist;
         }
 
         // Данные для графика
-        const x = data.map(pair => pair.cell.coordinates.x);
-        const y = data.map(pair => pair.cell.coordinates.y);
-        const z = data.map(pair => pair.cell.coordinates.z);
+        const xCells = data.map(pair => pair.cell.coordinates.x);
+        const yCells = data.map(pair => pair.cell.coordinates.y);
+        const zCells = data.map(pair => pair.cell.coordinates.z);
+
+        const products = data.map(pair => pair.product);
+        // кластеризация товаров по спросу
+        const prodClusters = products.map(prod => {
+            if (prod.demand / 100 <= classA) {
+                prod.cluster = "A";
+                return "red";
+            }
+            else if (prod.demand / 100 > classA && prod.demand / 100 <= classB) {
+                prod.cluster = "B";
+                return "green";
+            }
+            else {
+                prod.cluster = "C";
+                return "blue";
+            }
+        })
+
+        // кластеризация товаров по срокам годности
+        const prodClustersByExpiryDate = products.map(prod => {
+            const prodExpiryDate = new Date(prod.expiryDate);
+            const remained = prodExpiryDate.getTime() - currentTime.getTime();
+            const daysRemained = Math.round(remained / 24 / 60 / 60 / 1000);
+            if (remained <= shortTerm.milliseconds) {
+                return {
+                    id: prod.id,
+                    expiryDate: prodExpiryDate,
+                    daysRemained: daysRemained,
+                    cluster: "short term",
+                    color: "red"
+                }
+            }
+            else if (remained > shortTerm.milliseconds && remained <= midTerm.milliseconds) {
+                return {
+                    id: prod.id,
+                    expiryDate: prodExpiryDate,
+                    daysRemained: daysRemained,
+                    cluster: "medium term",
+                    color: "green"
+                }
+            }
+            else {
+                return {
+                    id: prod.id,
+                    expiryDate: prodExpiryDate,
+                    daysRemained: daysRemained,
+                    cluster: "long term",
+                    color: "blue"
+                };
+            }
+        })
+
 
         // Распределение по кластерам (по расстоянию)
-        const clusters = data.map(pair => {
+        //Визуализация, вариант 1
+        const cellClusters = data.map(pair => {
             const cell = pair.cell;
-            const relDist = (maxDist - (Math.abs(assemblyPoint.x - cell.coordinates.x) + Math.abs(assemblyPoint.y - cell.coordinates.y) + Math.abs(assemblyPoint.z - cell.coordinates.z))) / (maxDist - minDist);
-            if (relDist <= 0.2) {
+            const relDist = ((Math.abs(assemblyPoint.x - cell.coordinates.x) + Math.abs(assemblyPoint.y - cell.coordinates.y) + levelWeight * relativeShelving[cell.coordinates.z]) - minDist) / (maxDist - minDist);
+            if (relDist <= classA) {
                 cell.cluster = "A";
                 return "red";
             }
-            else if (relDist > 0.2 && relDist <= 0.3) {
+            else if (relDist > classA && relDist <= classB) {
                 cell.cluster = "B";
                 return "green";
             }
@@ -307,7 +380,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // Создаём новый div для каждого метода
+        // Создаем новый div для каждого метода
         const divId = `warehouse3d_${method}`;
         let container = document.getElementById(divId);
         if (!container) {
@@ -317,22 +390,65 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("3d_charts").appendChild(container); // Добавляем в родительский контейнер
         } else container.style.display = "block";
 
+
+
         // Построение 3D графика для метода
-        Plotly.newPlot(divId, [{
-            x: x,
-            y: y,
-            z: z,
+        // кластеризация по расстоянию между ячейкой и точкой консолидации
+        //________________вариант 1_________________
+        //__по идее, эта кластеризация (ячеек) не должна меняться от метода к методу
+        const clusteredCells = {
+            x: xCells,
+            y: yCells,
+            z: zCells,
             mode: "markers",
             type: "scatter3d",
+            name: "Кластеризация ячеек по удаленности от места консолидации",
             marker: {
                 size: 6,
-                color: clusters, // Массив кластеров (A, B, C)
+                color: cellClusters, // Массив кластеров (A, B, C)
                 colorscale: "Viridis", // Цветовая шкала
                 opacity: 0.8
             },
-            text: data.map(cell => `Ячейка: ${cell.cell.id}<br>Кластер: ${cell.cell.cluster}`)
-        }], {
-            title: { text: `3D Визуализация склада для метода ${method}` },
+            text: data.map(pair => `Ячейка: ${pair.cell.id}<br>Кластер: ${pair.cell.cluster}`)
+        }
+        //________________вариант 2_________________
+        const clusteredProducts = {
+            x: xCells,
+            y: yCells,
+            z: zCells,
+            mode: "markers",
+            type: "scatter3d",
+            name: "Кластеризация товаров по спросу",
+            marker: {
+                size: 6,
+                color: prodClusters, // Массив кластеров (A, B, C)
+                colorscale: "Viridis", // Цветовая шкала
+                opacity: 0.8
+            },
+            text: products.map(product => `Товар: ${product.id}<br>Кластер: ${product.cluster}<br>Спрос: ${product.demand}`)
+        }
+
+        //________________вариант 3_________________
+        const clusteredProductsByTerm = {
+            x: xCells,
+            y: yCells,
+            z: zCells,
+            mode: "markers",
+            type: "scatter3d",
+            name: "Кластеризация товаров по дате хранения товара",
+            marker: {
+                size: 6,
+                color: prodClustersByExpiryDate.map(product => product.color),
+                colorscale: "Viridis", // Цветовая шкала
+                opacity: 0.8
+            },
+            text: prodClustersByExpiryDate.map(product => `Товар: ${product.id}<br>Кластер: ${product.cluster}<br>Осталось, дней (${product.daysRemained})`)
+        }
+
+
+
+        Plotly.newPlot(divId, [clusteredCells, clusteredProducts, clusteredProductsByTerm], {
+            title: { text: `3D Визуализация размещения на складе для метода ${method}` },
             scene: {
                 xaxis: { title: "X" },
                 yaxis: { title: "Y" },

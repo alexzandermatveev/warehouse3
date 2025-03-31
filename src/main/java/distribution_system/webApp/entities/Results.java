@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
+import java.util.Map;
 import java.util.TreeSet;
 
 @Data
@@ -19,6 +20,7 @@ public class Results implements Serializable {
     private double score;
     private long timeRequired;
     private Solution solution;
+    private Map<Integer, Integer> relativeShelving;
 
     @JsonGetter("solution")
     public TreeSet<Pair> getSolutionForJSON(){

@@ -4,6 +4,7 @@ import distribution_system.webApp.enums.DistributionMethods;
 
 import java.util.*;
 
+
 public class Distribution {
 
     // Метод для случайного распределения товаров
@@ -31,7 +32,7 @@ public class Distribution {
 
 //        return calculateObjectiveFunction(randomSolution, warehouse);
         return new Results(DistributionMethods.RANDOM, calculateObjectiveFunction(randomSolution, warehouse),
-                0L, randomSolution);
+                0L, randomSolution, warehouse.getShelving().getRelativeShelving());
     }
 
     // Метод для ELECTRE TRI
@@ -71,7 +72,7 @@ public class Distribution {
 
         // Рассчитываем целевую функцию
         return new Results(DistributionMethods.ELECTRE_TRI, calculateObjectiveFunction(electreTriSolution, warehouse),
-                0L, electreTriSolution);
+                0L, electreTriSolution, warehouse.getShelving().getRelativeShelving());
     }
 
     // Метод для TOPSIS
@@ -127,14 +128,14 @@ public class Distribution {
 
         // Рассчитываем целевую функцию
         return new Results(DistributionMethods.TOPSIS, calculateObjectiveFunction(topsisSolution, warehouse),
-                0L, topsisSolution);
+                0L, topsisSolution, warehouse.getShelving().getRelativeShelving());
     }
 
     // Вспомогательный метод для ELECTRE TRI
     private static double calculateELECTREScore(Cell cell, Product product, Warehouse warehouse) {
         int distance = Math.abs(cell.getCoordinates().get("x") - warehouse.getAssemblyPoint().get("x"))
                 + Math.abs(cell.getCoordinates().get("y") - warehouse.getAssemblyPoint().get("y"));
-        int levelWeight = warehouse.getShelving().relativeLevels.get(cell.getCoordinates().get("z"));
+        int levelWeight = warehouse.getShelving().getRelativeShelving().get(cell.getCoordinates().get("z"));
         // По сути цф из метода по расчету цф, но для конкретной пары продукт-ячейка
         return product.getDemand() * distance * 0.3 * levelWeight;
     }
@@ -153,7 +154,7 @@ public class Distribution {
 
             int distance = Math.abs(cell.getCoordinates().get("x") - warehouse.getAssemblyPoint().get("x"))
                     + Math.abs(cell.getCoordinates().get("y") - warehouse.getAssemblyPoint().get("y"));
-            int levelWeight = warehouse.getShelving().relativeLevels.get(cell.getCoordinates().get("z"));
+            int levelWeight = warehouse.getShelving().getRelativeShelving().get(cell.getCoordinates().get("z"));
             matrix[i][0] = distance;
             matrix[i][1] = product.getDemand();
             matrix[i][2] = levelWeight;
@@ -308,7 +309,7 @@ public class Distribution {
 
         // Рассчитываем целевую функцию для объединённого решения
         return new Results(DistributionMethods.ELECTRE_TRI_TOPSIS, calculateObjectiveFunction(combinedSolution, warehouse),
-                0L, combinedSolution);
+                0L, combinedSolution, warehouse.getShelving().getRelativeShelving());
     }
 
 
@@ -316,6 +317,7 @@ public class Distribution {
     public static double calculateObjectiveFunction(Solution solution, Warehouse warehouse) {
         double totalValue = 0.0;
         Map<String, Integer> assemblyPoint = warehouse.getAssemblyPoint();
+        Map<Integer, Integer> relativeShelving = warehouse.getShelving().getRelativeShelving();
 
         for (Map.Entry<Cell, Product> entry : solution.getMapping().entrySet()) {
             Cell cell = entry.getKey();
@@ -329,8 +331,7 @@ public class Distribution {
             int demand = product.getDemand();
 
             // Считаем вклад в целевую функцию
-            totalValue += demand * distance * 0.3 * warehouse.getShelving()
-                    .relativeLevels.get(cell.getCoordinates().get("z"));
+            totalValue += demand * distance * 0.3 * relativeShelving.get(cell.getCoordinates().get("z"));
         }
         return totalValue;
     }

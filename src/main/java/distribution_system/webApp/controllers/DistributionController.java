@@ -1,11 +1,7 @@
 package distribution_system.webApp.controllers;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import distribution_system.webApp.entities.Product;
 import distribution_system.webApp.entities.Results;
-import distribution_system.webApp.entities.Warehouse;
-import distribution_system.webApp.enums.DistributionMethods;
 import distribution_system.webApp.services.DistributionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

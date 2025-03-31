@@ -1,17 +1,24 @@
 package distribution_system.webApp.entities;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-
+/**
+ * Рассчитывает относительный уровень удобства каждого яруса стеллажа исходя из среднего роста человека
+ */
 public class Shelving {
 
     private static final int SHOULDER_LEVEL_HEIGHT = 150; // уровень плеча, см
     private static final int HUMAN_LOWER_BOUND = 116; //нижняя граница грудной клетки среднего мужчины
-    public final Map<Integer, Integer> relativeLevels;
+    private final Map<Integer, Integer> relativeLevels;
 
     public Shelving(int cellHeight, int levels) {
         relativeLevels = calculateRelativeLevel(cellHeight, levels);
+    }
+
+    public Map<Integer, Integer> getRelativeShelving(){
+        return Collections.unmodifiableMap(relativeLevels);
     }
 
     public static Map<Integer, Integer> calculateRelativeLevel(int cellHeight, int levels) {

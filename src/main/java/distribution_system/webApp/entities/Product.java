@@ -56,7 +56,7 @@ public class Product implements Comparable<Product> {
                     "P" + i,
                     "Product_" + i,
                     Map.of("width", 50, "height", 20, "depth", 30),
-                    LocalDate.now().plusDays(random.nextInt(365) + 1),
+                    LocalDate.now().plusDays(random.nextInt( 365) + 1),
                     random.nextInt(100) + 1
             ));
         }

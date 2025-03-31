@@ -128,7 +128,7 @@ public class DistributionService {
                             new ArrayList<>(products), 5, 100);
                     System.out.println("test: " + solution.prepareForJSON());
                     yield new Results(DistributionMethods.GA, solution.getFitness(),
-                            System.currentTimeMillis() - startTime, solution);
+                            System.currentTimeMillis() - startTime, solution, warehouse.getShelving().getRelativeShelving());
                 }
             };
             resultsList.add(results);
