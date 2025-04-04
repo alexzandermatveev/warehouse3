@@ -386,7 +386,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (!container) {
             container = document.createElement("div");
             container.id = divId;
-            container.style = "width: 100%; height: 500px; margin-bottom: 20px;";
+            container.style = "width: 100%; height: 500px; margin: 0 auto;";
             document.getElementById("3d_charts").appendChild(container); // Добавляем в родительский контейнер
         } else container.style.display = "block";
 
@@ -445,17 +445,49 @@ document.addEventListener("DOMContentLoaded", function () {
             text: prodClustersByExpiryDate.map(product => `Товар: ${product.id}<br>Кластер: ${product.cluster}<br>Осталось, дней (${product.daysRemained})`)
         }
 
+        //________________точка консолидации_________________
+        const assemblyPointPoints = {
+            x: [assemblyPoint.x],
+            y: [assemblyPoint.y],
+            z: [assemblyPoint.z],
+            mode: "markers",
+            type: "scatter3d",
+            name: "Точка консолидации",
+            marker: {
+                size: 8,
+                color: "yellow",
+                colorscale: "Viridis", // Цветовая шкала
+                opacity: 0.8
+            },
+            text: "Точка консолидации"
+        }
 
 
-        Plotly.newPlot(divId, [clusteredCells, clusteredProducts, clusteredProductsByTerm], {
+
+        Plotly.newPlot(divId, [clusteredCells, clusteredProducts, clusteredProductsByTerm, assemblyPointPoints], {
             title: { text: `3D Визуализация размещения на складе для метода ${method}` },
             scene: {
                 xaxis: { title: "X" },
                 yaxis: { title: "Y" },
                 zaxis: { title: "Z" }
             },
-            showlegend: true
+            autosize: true,
+            showlegend: true,
+            legend: {
+                yanchor: 'bottom',  // Расположение снизу
+                y: -0.2,  // Смещаем легенду вниз
+                xanchor: 'center',
+                x: 0.5
+            }
+
         });
+
+        /*
+        Plotly.relayout(divId, {
+            width: window.innerWidth,  // Ширина окна браузера
+            height: 500
+        });
+        */
     }
 
 

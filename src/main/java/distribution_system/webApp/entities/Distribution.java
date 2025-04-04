@@ -1,10 +1,14 @@
 package distribution_system.webApp.entities;
 
 import distribution_system.webApp.enums.DistributionMethods;
+import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 
-
+@Slf4j
 public class Distribution {
 
     // Метод для случайного распределения товаров
@@ -18,7 +22,7 @@ public class Distribution {
         Collections.shuffle(products);
         Collections.shuffle(cells);
 
-        //решение
+        // решение
         Solution randomSolution = new Solution();
 
         // Размещаем товары
@@ -27,18 +31,20 @@ public class Distribution {
             Product product = products.get(i);
             cell.updateOccupiedStatus(true);
             randomSolution.addMapping(cell, product);
-//            System.out.printf("Товар %s распределён в ячейку %s%n", product.getId(), cell.getId());
+            // System.out.printf("Товар %s распределён в ячейку %s%n", product.getId(),
+            // cell.getId());
         }
 
-//        return calculateObjectiveFunction(randomSolution, warehouse);
+        // return calculateObjectiveFunction(randomSolution, warehouse);
         return new Results(DistributionMethods.RANDOM, calculateObjectiveFunction(randomSolution, warehouse),
                 0L, randomSolution, warehouse.getShelving().getRelativeShelving());
     }
 
     // Метод для ELECTRE TRI
     /*
-    Для каждой пары Cell и Product рассчитывается оценка (score) на основе расстояния, востребованности и уровня.
-    Товар размещается в ячейке с наивысшей оценкой.
+     * Для каждой пары Cell и Product рассчитывается оценка (score) на основе
+     * расстояния, востребованности и уровня.
+     * Товар размещается в ячейке с наивысшей оценкой.
      */
     public static Results distributeWithELECTRE_TRI(Warehouse warehouse, List<Product> products) {
         List<Cell> cells = warehouse.getCells();
@@ -67,7 +73,8 @@ public class Distribution {
             }
             bestCell.updateOccupiedStatus(true);
             electreTriSolution.addMapping(bestCell, product);
-//            System.out.printf("Товар %s распределён в ячейку %s (ELECTRE TRI)%n", product.getId(), bestCell.getId());
+            // System.out.printf("Товар %s распределён в ячейку %s (ELECTRE TRI)%n",
+            // product.getId(), bestCell.getId());
         }
 
         // Рассчитываем целевую функцию
@@ -77,8 +84,10 @@ public class Distribution {
 
     // Метод для TOPSIS
     /*
-    Используется матрица решений с критериями: расстояние, востребованность и уровень.
-    Матрица нормализуется, взвешивается, и для каждой строки рассчитываются расстояния до идеального и анти-идеального решений.
+     * Используется матрица решений с критериями: расстояние, востребованность и
+     * уровень.
+     * Матрица нормализуется, взвешивается, и для каждой строки рассчитываются
+     * расстояния до идеального и анти-идеального решений.
      */
     public static Results distributeWithTOPSIS(Warehouse warehouse, List<Product> products) {
         List<Cell> cells = warehouse.getCells();
@@ -93,7 +102,7 @@ public class Distribution {
         double[][] normalizedMatrix = normalizeMatrix(decisionMatrix);
 
         // Весовые коэффициенты
-        double[] weights = {0.4, 0.4, 0.2}; // Пример: расстояние, востребованность, уровень
+        double[] weights = { 0.4, 0.4, 0.2 }; // Пример: расстояние, востребованность, уровень
 
         // Взвешенная нормализация
         double[][] weightedMatrix = applyWeights(normalizedMatrix, weights);
@@ -123,7 +132,8 @@ public class Distribution {
             Product product = products.get(i);
             cell.updateOccupiedStatus(true);
             topsisSolution.addMapping(cell, product);
-//            System.out.printf("Товар %s распределён в ячейку %s (TOPSIS)%n", product.getId(), cell.getId());
+            // System.out.printf("Товар %s распределён в ячейку %s (TOPSIS)%n",
+            // product.getId(), cell.getId());
         }
 
         // Рассчитываем целевую функцию
@@ -141,8 +151,7 @@ public class Distribution {
     }
 
     // Создание матрицы решений для TOPSIS
-    private static double[][] createDecisionMatrix(List<Cell> cells, List<Product> products, Warehouse
-            warehouse) {
+    private static double[][] createDecisionMatrix(List<Cell> cells, List<Product> products, Warehouse warehouse) {
         double[][] matrix = new double[cells.size()][3];
         Integer oneProductList = products.size() == 1 ? 0 : null;
 
@@ -197,15 +206,15 @@ public class Distribution {
         double[] ideal = new double[cols];
 
         // Задаём правила для каждого столбца: минимизация или максимизация
-        boolean[] isMaximization = {false, true, false}; // расстояние (min), спрос (max), уровень (min)
+        boolean[] isMaximization = { false, true, false }; // расстояние (min), спрос (max), уровень (min)
 
         for (int j = 0; j < cols; j++) {
             int finalJ = j;
             ideal[j] = isMaximization[j]
                     ? (isPositive ? Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0)
-                    : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0))
+                            : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0))
                     : (isPositive ? Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0)
-                    : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0));
+                            : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0));
         }
         return ideal;
     }
@@ -224,15 +233,16 @@ public class Distribution {
         return distances;
     }
 
-    private static double getElectreThreshold(List<Cell> cells, Product product, Warehouse warehouse, double coefficient) {
+    private static double getElectreThreshold(List<Cell> cells, Product product, Warehouse warehouse,
+            double coefficient) {
         // Здесь коэффициент имеет решающее значение. Чем он меньше,
-        // тем точнее должны быть подобраны ячейки, но есть риск, что отобранных ячеек окажется меньше необходимого
+        // тем точнее должны быть подобраны ячейки, но есть риск, что отобранных ячеек
+        // окажется меньше необходимого
         return coefficient * cells.stream()
                 .map(cell -> calculateELECTREScore(cell, product, warehouse))
                 .max(Double::compareTo)
                 .orElse(Double.MAX_VALUE); // т.к. это минимальный порог
     }
-
 
     public static Results distributeWithELECTRE_TRI_and_TOPSIS(Warehouse warehouse, List<Product> products) {
         List<Cell> cells = warehouse.getCells();
@@ -253,15 +263,20 @@ public class Distribution {
                 for (Cell cell : cells) {
                     if (!cell.isOccupied()) {
                         double score = calculateELECTREScore(cell, product, warehouse);
-                        if (score < getElectreThreshold(cells, product, warehouse, thresholdCoefficient)) { // пороговое значения для ELECTRE TRI
+                        if (score < getElectreThreshold(cells, product, warehouse, thresholdCoefficient)) { // пороговое
+                                                                                                            // значения
+                                                                                                            // для
+                                                                                                            // ELECTRE
+                                                                                                            // TRI
                             candidateCells.add(cell);
                         }
                     }
                 }
             } while (candidateCells.isEmpty());
-//            if (candidateCells.isEmpty()) {
-//                throw new IllegalStateException("Для товара " + product.getId() + " не найдены подходящие ячейки (ELECTRE TRI).");
-//            }
+            // if (candidateCells.isEmpty()) {
+            // throw new IllegalStateException("Для товара " + product.getId() + " не
+            // найдены подходящие ячейки (ELECTRE TRI).");
+            // }
             filteredCells.put(product, candidateCells);
         }
 
@@ -276,7 +291,7 @@ public class Distribution {
             double[][] normalizedMatrix = normalizeMatrix(decisionMatrix);
 
             // Весовые коэффициенты
-            double[] weights = {0.4, 0.4, 0.2}; // Примерные веса критериев
+            double[] weights = { 0.4, 0.4, 0.2 }; // Примерные веса критериев
 
             // Взвешенная нормализация
             double[][] weightedMatrix = applyWeights(normalizedMatrix, weights);
@@ -303,21 +318,24 @@ public class Distribution {
             if (bestCell != null) {
                 bestCell.updateOccupiedStatus(true);
                 combinedSolution.addMapping(bestCell, product);
-//                System.out.printf("Товар %s распределён в ячейку %s (ELECTRE TRI + TOPSIS)%n", product.getId(), bestCell.getId());
+                // System.out.printf("Товар %s распределён в ячейку %s (ELECTRE TRI +
+                // TOPSIS)%n", product.getId(), bestCell.getId());
             }
         }
 
         // Рассчитываем целевую функцию для объединённого решения
-        return new Results(DistributionMethods.ELECTRE_TRI_TOPSIS, calculateObjectiveFunction(combinedSolution, warehouse),
+        return new Results(DistributionMethods.ELECTRE_TRI_TOPSIS,
+                calculateObjectiveFunction(combinedSolution, warehouse),
                 0L, combinedSolution, warehouse.getShelving().getRelativeShelving());
     }
-
 
     // Метод для расчёта целевой функции
     public static double calculateObjectiveFunction(Solution solution, Warehouse warehouse) {
         double totalValue = 0.0;
         Map<String, Integer> assemblyPoint = warehouse.getAssemblyPoint();
         Map<Integer, Integer> relativeShelving = warehouse.getShelving().getRelativeShelving();
+
+        LocalDateTime today = LocalDateTime.now();
 
         for (Map.Entry<Cell, Product> entry : solution.getMapping().entrySet()) {
             Cell cell = entry.getKey();
@@ -330,8 +348,20 @@ public class Distribution {
             // Уровень востребованности
             int demand = product.getDemand();
 
+            // осталось дней по срокам годности. Больше дней -> более дальние позиции
+            long restDays = 1;
+            try {
+                restDays = Duration.between(today, product.getExpiryDate().atStartOfDay()).toDays();
+                if (restDays <= 0)
+                    restDays = 1; // вышел срок годности
+            } catch (NullPointerException exception) {
+                log.debug("expiryDate in product {} is null", product.getId());
+                restDays = 1;
+            }
+
             // Считаем вклад в целевую функцию
-            totalValue += demand * distance * 0.3 * relativeShelving.get(cell.getCoordinates().get("z"));
+            totalValue += (demand * distance * 0.3 * relativeShelving.get(cell.getCoordinates().get("z")))
+                    / restDays;
         }
         return totalValue;
     }
