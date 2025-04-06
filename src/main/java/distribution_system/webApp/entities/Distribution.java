@@ -4,7 +4,6 @@ import distribution_system.webApp.enums.DistributionMethods;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -61,7 +60,7 @@ public class Distribution {
                 if (cell.isOccupied()) {
                     continue;
                 }
-                double score = calculateELECTREScore(cell, product, warehouse);
+                double score = singleVariantOF(product, cell, warehouse);
                 if (score < bestScore) { // минимизируем
                     bestScore = score;
                     bestCell = cell;
@@ -102,7 +101,7 @@ public class Distribution {
         double[][] normalizedMatrix = normalizeMatrix(decisionMatrix);
 
         // Весовые коэффициенты
-        double[] weights = { 0.4, 0.4, 0.2 }; // Пример: расстояние, востребованность, уровень
+        double[] weights = {0.3, 0.3, 0.2, 0.2}; // Пример: расстояние, востребованность, уровень + сроки годности
 
         // Взвешенная нормализация
         double[][] weightedMatrix = applyWeights(normalizedMatrix, weights);
@@ -141,18 +140,11 @@ public class Distribution {
                 0L, topsisSolution, warehouse.getShelving().getRelativeShelving());
     }
 
-    // Вспомогательный метод для ELECTRE TRI
-    private static double calculateELECTREScore(Cell cell, Product product, Warehouse warehouse) {
-        int distance = Math.abs(cell.getCoordinates().get("x") - warehouse.getAssemblyPoint().get("x"))
-                + Math.abs(cell.getCoordinates().get("y") - warehouse.getAssemblyPoint().get("y"));
-        int levelWeight = warehouse.getShelving().getRelativeShelving().get(cell.getCoordinates().get("z"));
-        // По сути цф из метода по расчету цф, но для конкретной пары продукт-ячейка
-        return product.getDemand() * distance * 0.3 * levelWeight;
-    }
+
 
     // Создание матрицы решений для TOPSIS
     private static double[][] createDecisionMatrix(List<Cell> cells, List<Product> products, Warehouse warehouse) {
-        double[][] matrix = new double[cells.size()][3];
+        double[][] matrix = new double[cells.size()][4];
         Integer oneProductList = products.size() == 1 ? 0 : null;
 
         for (int i = 0; i < cells.size(); i++) {
@@ -167,6 +159,7 @@ public class Distribution {
             matrix[i][0] = distance;
             matrix[i][1] = product.getDemand();
             matrix[i][2] = levelWeight;
+            matrix[i][3] = product.getExpiryDate().toEpochDay();
         }
         return matrix;
     }
@@ -206,15 +199,15 @@ public class Distribution {
         double[] ideal = new double[cols];
 
         // Задаём правила для каждого столбца: минимизация или максимизация
-        boolean[] isMaximization = { false, true, false }; // расстояние (min), спрос (max), уровень (min)
+        boolean[] isMaximization = {false, true, false, false}; // расстояние (min), спрос (max), уровень (min) + срок годности (уменьшаем сроки, чтобы повысить оборачиваемость)
 
         for (int j = 0; j < cols; j++) {
             int finalJ = j;
             ideal[j] = isMaximization[j]
                     ? (isPositive ? Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0)
-                            : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0))
+                    : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0))
                     : (isPositive ? Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).min().orElse(0)
-                            : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0));
+                    : Arrays.stream(matrix).mapToDouble(row -> row[finalJ]).max().orElse(0));
         }
         return ideal;
     }
@@ -234,12 +227,12 @@ public class Distribution {
     }
 
     private static double getElectreThreshold(List<Cell> cells, Product product, Warehouse warehouse,
-            double coefficient) {
+                                              double coefficient) {
         // Здесь коэффициент имеет решающее значение. Чем он меньше,
         // тем точнее должны быть подобраны ячейки, но есть риск, что отобранных ячеек
         // окажется меньше необходимого
         return coefficient * cells.stream()
-                .map(cell -> calculateELECTREScore(cell, product, warehouse))
+                .map(cell -> singleVariantOF(product, cell, warehouse))
                 .max(Double::compareTo)
                 .orElse(Double.MAX_VALUE); // т.к. это минимальный порог
     }
@@ -262,12 +255,12 @@ public class Distribution {
                 candidateCells = new ArrayList<>();
                 for (Cell cell : cells) {
                     if (!cell.isOccupied()) {
-                        double score = calculateELECTREScore(cell, product, warehouse);
+                        double score = singleVariantOF(product, cell, warehouse);
                         if (score < getElectreThreshold(cells, product, warehouse, thresholdCoefficient)) { // пороговое
-                                                                                                            // значения
-                                                                                                            // для
-                                                                                                            // ELECTRE
-                                                                                                            // TRI
+                            // значения
+                            // для
+                            // ELECTRE
+                            // TRI
                             candidateCells.add(cell);
                         }
                     }
@@ -291,7 +284,7 @@ public class Distribution {
             double[][] normalizedMatrix = normalizeMatrix(decisionMatrix);
 
             // Весовые коэффициенты
-            double[] weights = { 0.4, 0.4, 0.2 }; // Примерные веса критериев
+            double[] weights = {0.3, 0.3, 0.2, 0.2}; // Примерные веса критериев
 
             // Взвешенная нормализация
             double[][] weightedMatrix = applyWeights(normalizedMatrix, weights);
@@ -332,37 +325,37 @@ public class Distribution {
     // Метод для расчёта целевой функции
     public static double calculateObjectiveFunction(Solution solution, Warehouse warehouse) {
         double totalValue = 0.0;
-        Map<String, Integer> assemblyPoint = warehouse.getAssemblyPoint();
-        Map<Integer, Integer> relativeShelving = warehouse.getShelving().getRelativeShelving();
-
-        LocalDateTime today = LocalDateTime.now();
-
         for (Map.Entry<Cell, Product> entry : solution.getMapping().entrySet()) {
             Cell cell = entry.getKey();
             Product product = entry.getValue();
-
-            // Расстояние до точки сборки (манхеттенское расстояние)
-            int distance = Math.abs(cell.getCoordinates().get("x") - assemblyPoint.get("x"))
-                    + Math.abs(cell.getCoordinates().get("y") - assemblyPoint.get("y"));
-
-            // Уровень востребованности
-            int demand = product.getDemand();
-
-            // осталось дней по срокам годности. Больше дней -> более дальние позиции
-            long restDays = 1;
-            try {
-                restDays = Duration.between(today, product.getExpiryDate().atStartOfDay()).toDays();
-                if (restDays <= 0)
-                    restDays = 1; // вышел срок годности
-            } catch (NullPointerException exception) {
-                log.debug("expiryDate in product {} is null", product.getId());
-                restDays = 1;
-            }
-
             // Считаем вклад в целевую функцию
-            totalValue += (demand * distance * 0.3 * relativeShelving.get(cell.getCoordinates().get("z")))
-                    / restDays;
+            totalValue += singleVariantOF(product, cell, warehouse);
         }
         return totalValue;
+    }
+
+    // ЦФ для единственного варианта
+    public static double singleVariantOF(Product product, Cell cell, Warehouse warehouse) {
+        Map<String, Integer> assemblyPoint = warehouse.getAssemblyPoint();
+        Map<Integer, Integer> relativeShelving = warehouse.getShelving().getRelativeShelving();
+        LocalDateTime today = LocalDateTime.now();
+
+
+        // Расстояние до точки сборки (манхеттенское расстояние)
+        int distance = Math.abs(cell.getCoordinates().get("x") - assemblyPoint.get("x"))
+                + Math.abs(cell.getCoordinates().get("y") - assemblyPoint.get("y"));
+
+        // осталось дней по срокам годности. Больше дней -> более дальние позиции
+        long restDays = 1;
+        try {
+            restDays = Duration.between(today, product.getExpiryDate().atStartOfDay()).toDays();
+            if (restDays <= 0)
+                restDays = 1; // вышел срок годности
+        } catch (NullPointerException exception) {
+            log.debug("expiryDate in product {} is null", product.getId());
+        }
+
+        return (product.getDemand() * distance * 0.3 * relativeShelving.get(cell.getCoordinates().get("z")))
+                / restDays;
     }
 }
