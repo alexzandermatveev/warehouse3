@@ -199,7 +199,7 @@ public class Distribution {
         double[] ideal = new double[cols];
 
         // Задаём правила для каждого столбца: минимизация или максимизация
-        boolean[] isMaximization = {false, true, false, false}; // расстояние (min), спрос (max), уровень (min) + срок годности (уменьшаем сроки, чтобы повысить оборачиваемость)
+        boolean[] isMaximization = {false, true, false, false}; // расстояние (min), спрос (max), уровень (min) + срок годности (min сроки, потому что здесь отсчете от эпохи, соответственно чем меньше - тем больше запас срока годности)
 
         for (int j = 0; j < cols; j++) {
             int finalJ = j;

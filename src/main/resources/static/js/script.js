@@ -71,13 +71,24 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
 
-    function toggleDetails(id) {
+    function toggleDetails(id, button) {
+        /* 
         let element = document.getElementById(id);
         let currentDisplay = window.getComputedStyle(element).display;
         if (currentDisplay === "none") {
             element.style.display = "block";
         } else {
             element.style.display = "none";
+        }
+            */
+        const el = document.getElementById(id);
+        el.classList.toggle('active');
+        
+        // Меняем текст кнопки в зависимости от состояния
+        if (el.classList.contains('active')) {
+            button.textContent = '➖';
+        } else {
+            button.textContent = '➕';
         }
     }
 
@@ -264,6 +275,9 @@ document.addEventListener("DOMContentLoaded", function () {
             name: "Время, мс",
             marker: { color: "orange" }
         }], layout);
+
+        document.getElementById('scoreChart').style.display = 'block';
+        document.getElementById('timeChart').style.display = 'block';
     }
 
 
@@ -312,11 +326,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const products = data.map(pair => pair.product);
         // кластеризация товаров по спросу
         const prodClusters = products.map(prod => {
-            if (prod.demand / 100 <= classA) {
+            if (prod.demand / 100 >= 1 - classA) {
+                // чем больше спрос - тем лучше
                 prod.cluster = "A";
                 return "red";
             }
-            else if (prod.demand / 100 > classA && prod.demand / 100 <= classB) {
+            else if (prod.demand / 100 < 1 - classA && prod.demand / 100 >= 1 - classB) {
                 prod.cluster = "B";
                 return "green";
             }

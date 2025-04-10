@@ -6,14 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Распределение тарно-штучного груза</title>
 
-    <style>
-        .details {
-            display: none;
-        }
-    </style>
 
 
-    <script src="/js/script.js"></script>
+    <!-- <script src="/js/script.js"></script> -->
+    <script src="../static/js/script.js"></script>
 
 
     <!-- CodeMirror CSS -->
@@ -28,14 +24,16 @@
     <!-- plotly -->
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
 
+    <!--<link rel="stylesheet" href="/css/style.css"> -->
+    <link rel="stylesheet" href="../static/css/styles.css">
 
 </head>
 
 <body>
     <h1>Выберите метод распределения</h1>
-    <form>
+    <div class="start-panel">
         <label><input type="checkbox" id="RANDOM">Случайное размещение
-            <button type="button" onclick="toggleDetails('details1')">Подробнее</button>
+            <button type="button" class="toggle-button" onclick="toggleDetails('details1', this)">➕</button>
         </label>
         <div id="details1" class="details">Применяется исключительно для сравнения с другими вариантами размещения.
             Показывает наименее эффективное размещение.
@@ -43,7 +41,7 @@
         <br>
 
         <label><input type="checkbox" id="ELECTRE_TRI">ELECTRE TRI
-            <button type="button" onclick="toggleDetails('details2')">Подробнее</button>
+            <button type="button" class="toggle-button" onclick="toggleDetails('details2', this)">➕</button>
         </label>
         <div id="details2" class="details">ELECTRE TRI распределяет объекты (товары) по заранее определенным категориям
             (например, приоритетные и менее приоритетные группы). Метод использует концепцию порогов, которые позволяют
@@ -52,7 +50,7 @@
         <br>
 
         <label><input type="checkbox" id="TOPSIS">TOPSIS
-            <button type="button" onclick="toggleDetails('details3')">Подробнее</button>
+            <button type="button" class="toggle-button" onclick="toggleDetails('details3', this)">➕</button>
         </label>
         <div id="details3" class="details">Идея метода заключается в том, чтобы найти альтернативу, которая была бы
             максимально близка к идеальному решению и максимально удалена от анти-идеального решения. В основе лежит
@@ -62,7 +60,7 @@
         <br>
 
         <label><input type="checkbox" id="ELECTRE_TRI_TOPSIS">ELECTRE TRI + TOPSIS
-            <button type="button" onclick="toggleDetails('details4')">Подробнее</button>
+            <button type="button" class="toggle-button" onclick="toggleDetails('details4', this)">➕</button>
         </label>
         <div id="details4" class="details">Комбинированный подход ELECTRE TRI + TOPSIS объединяет сильные стороны двух
             мощных многокритериальных методов: ELECTRE TRI, который классифицирует товары по категориям на основе их
@@ -75,7 +73,7 @@
         <br>
 
         <label><input type="checkbox" id="GA">Genetic Algorithm
-            <button type="button" onclick="toggleDetails('details5')">Подробнее</button>
+            <button type="button" class="toggle-button" onclick="toggleDetails('details5', this)">➕</button>
         </label>
         <div id="details5" class="details">Основная идея заключается в том, чтобы находить оптимальное или приближенное
             к
@@ -85,34 +83,38 @@
         </div>
         <br>
 
-        <h2>Загрузите конфигурацию склада</h2>
-        <input type="file" id="warehouseConfig" accept=".json">
-        <button type="button" onclick="clearJson()">Очистить</button>
+        <div class="config-block">
+            <h2>Загрузите конфигурацию склада</h2>
+            <input type="file" id="warehouseConfig" accept=".json">
+            <button class="file-button" type="button" onclick="clearJson()">Очистить</button>
 
-        <a href="/warehouse_ex.json" download>Скачать пример</a>
-        <br>
-        <label><input type="checkbox" id="generateCells">Сгенерировать ячейки
-            <input type="number" id="cellsAmount" min="1" step="1" value="100">Количество ячеек</input>
-            <div id="details6" class="details" style="display:block" onclick="toggleDetails('details6')"> Если в файле
-                json указан список products и он не пуст, то будет
-                сгенерировано n товаров по примеру первого товара из списка.
+            <a href="/warehouse_ex.json" download>Скачать пример</a>
+            <br>
+            <div class="checkbox-row">
+                <label><input type="checkbox" id="generateCells">Сгенерировать ячейки
+                    <input type="number" id="cellsAmount" min="1" step="1" value="100">Количество ячеек</input>
+                    <button type="button" class="toggle-button" onclick="toggleDetails('details6', this)">➕</button>
+                </label>
+                <div id="details6" class="details"> Если в файле
+                    json указан список products и он не пуст, то будет
+                    сгенерировано n товаров по примеру первого товара из списка.
+                </div>
+                <label><input type="checkbox" id="generateProducts">Сгенерировать товары
+                    <input type="number" id="productsAmount" min="1" step="1" value="100">Количество товаров</input>
+                    <button type="button" class="toggle-button" onclick="toggleDetails('details7', this)">➕</button>
+                </label>
+                <div id="details7" class="details"> Если в файле
+                    json указан список products и он не пуст, то будет
+                    сгенерировано n товаров по примеру первого товара из списка.
+                </div>
             </div>
-        </label>
-        <br>
 
-        <label><input type="checkbox" id="generateProducts">Сгенерировать товары
-            <input type="number" id="productsAmount" min="1" step="1" value="100">Количество товаров</input>
-            <div id="details7" class="details" style="display:block" onclick="toggleDetails('details7')"> Если в файле
-                json указан список products и он не пуст, то будет
-                сгенерировано n товаров по примеру первого товара из списка.
-            </div>
-        </label>
-        <br>
+            <button class="file-button" type="button" onclick="downloadEditorJson()">Скачать конфигурацию JSON</button>
+            <br>
+        </div>
 
-        <button type="button" onclick="downloadEditorJson()">Скачать конфигурацию JSON</button>
-        <br>
-
-        <h3><button type="button" onclick="toggleConstructor()" id="openConstructor">Открыть конструктор склада</button>
+        <h3><button type="button" onclick="toggleConstructor()" id="openConstructor">Открыть
+                конструктор склада</button>
         </h3>
         <div id="warehouseConstructor" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
 
@@ -149,7 +151,7 @@
         <br>
 
         <button type="button" id="sendButton">Отправить</button>
-    </form>
+    </div>
 
 
     <div id="3d_charts">
@@ -165,8 +167,8 @@
 
     <h3>Сравнение Score и времени выполнения</h3>
 
-    <div id="scoreChart" style="width: 600px; height: 400px;"></div>
-    <div id="timeChart" style="width: 600px; height: 400px;"></div>
+    <div id="scoreChart" style="width: 600px; height: 400px; display: none;"></div>
+    <div id="timeChart" style="width: 600px; height: 400px; display: none;"></div>
 
 
 
