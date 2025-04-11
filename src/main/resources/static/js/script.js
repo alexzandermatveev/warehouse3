@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function toggleConstructor() {
         const constructorDiv = document.getElementById("warehouseConstructor");
-        constructorDiv.style.display = constructorDiv.style.display === "none" ? "block" : "none";
+        constructorDiv.style.display = window.getComputedStyle(constructorDiv).display === "none" ? "block" : "none";
     }
 
     function generateJsonFromConstructor() {
@@ -83,7 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             */
         const el = document.getElementById(id);
         el.classList.toggle('active');
-        
+
         // Меняем текст кнопки в зависимости от состояния
         if (el.classList.contains('active')) {
             button.textContent = '➖';
@@ -202,36 +202,50 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateResults(data) {
-        //console.log("Данные в updateResults", data);
-
         buildCharts(data);
         data.forEach(solution => {
             build3DWarehouse(solution.method, solution.solution, solution.relativeShelving);
         });
-        let resultsDiv = document.getElementById("results");
-        resultsDiv.innerHTML = "";
 
-        data.forEach(result => {
-            let div = document.createElement("div");
-            div.innerHTML = `<h3>${result.method}</h3>
-                             <p>Score: ${result.score.toFixed(2)}</p>
-                             <p>Затрачено времени: ${result.timeRequired} ms</p>
-                             <button class="download-btn" data-method="${result.method}" data-solution='${JSON.stringify(result.solution)}'>
-                                Скачать JSON
-                             </button>`;
-
-            resultsDiv.appendChild(div);
+        // Обнуляем старые значения
+        document.querySelectorAll(".result-block").forEach(block => {
+            block.querySelector(".score").textContent = "-";
+            block.querySelector(".time").textContent = "-";
+            block.querySelector(".download-res").disabled = true;
+            
+            //block.querySelector(".download-res").removeAttribute("data-method");
+            block.querySelector(".download-res").removeAttribute("data-solution");
         });
 
-        // Назначаем обработчик событий для кнопок
-        document.querySelectorAll(".download-btn").forEach(button => {
+        // Обновляем только пришедшие результаты
+        data.forEach(result => {
+            const block = document.querySelector(`.result-block[data-method="${result.method}"]`);
+            if (block) {
+                block.querySelector(".score").textContent = result.score.toFixed(2);
+                block.querySelector(".time").textContent = `${result.timeRequired} ms`;
+
+                block.querySelector(".download-res").disabled = false;
+                //block.setAttribute("data-method", result.method);
+                block.setAttribute("data-solution", JSON.stringify(result.solution));
+            }
+        });
+
+        // Назначаем обработчики (или можно делать это один раз при загрузке страницы)
+        document.querySelectorAll(".download-res").forEach(button => {
             button.addEventListener("click", function () {
-                const method = this.getAttribute("data-method");
-                const solution = this.getAttribute("data-solution");
-                downloadSolution(method, solution);
+                const block = this.closest(".result-block");  // ищем ближайший родительский блок
+                const method = block?.getAttribute("data-method");
+                const solution = block?.getAttribute("data-solution");
+        
+                if (method && solution) {
+                    downloadSolution(method, solution);
+                }
             });
         });
+        
     }
+
+
 
     function buildCharts(data) {
 
@@ -408,6 +422,26 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
         // Построение 3D графика для метода
+        const empties = {
+            x: xCells,
+            y: yCells,
+            z: zCells,
+            mode: "markers",
+            type: "scatter3d",
+            name: "Заполненность ячеек",
+            marker: {
+                size: 6,
+                color: data.map(pair => {
+                    if (pair.cell.occupied) return "green";
+                    else return "red";
+                }), // Массив кластеров (A, B, C)
+                colorscale: "Viridis", // Цветовая шкала
+                opacity: 0.8
+            },
+            text: data.map(pair => `Ячейка: ${pair.cell.id}<br>Occupied: ${pair.cell.occupied}`)
+        }
+
+
         // кластеризация по расстоянию между ячейкой и точкой консолидации
         //________________вариант 1_________________
         //__по идее, эта кластеризация (ячеек) не должна меняться от метода к методу
@@ -479,7 +513,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-        Plotly.newPlot(divId, [clusteredCells, clusteredProducts, clusteredProductsByTerm, assemblyPointPoints], {
+        Plotly.newPlot(divId, [clusteredCells, clusteredProducts, clusteredProductsByTerm, empties, assemblyPointPoints], {
             title: { text: `3D Визуализация размещения на складе для метода ${method}` },
             scene: {
                 xaxis: { title: "X" },
