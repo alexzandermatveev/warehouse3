@@ -87,7 +87,6 @@ public class GeneticSolution extends Solution {
 
     private static List<GeneticSolution> initializePopulation(Warehouse warehouse, List<Product> products, int populationSize) {
         List<GeneticSolution> population = new ArrayList<>();
-        Random random = new Random();
 
         for (int i = 0; i < populationSize; i++) {
             GeneticSolution solution = new GeneticSolution();
@@ -98,6 +97,7 @@ public class GeneticSolution extends Solution {
             Set<Product> usedProducts = new HashSet<>();
             for (int j = 0; j < products.size(); j++) {
                 if (!usedProducts.contains(products.get(j))) {
+                    cells.get(j).updateOccupiedStatus(true);
                     solution.addMapping(cells.get(j), products.get(j));
                     usedProducts.add(products.get(j));
                 }
@@ -278,6 +278,10 @@ public class GeneticSolution extends Solution {
         CustomEntry<Cell, Product> newEntry1 = new CustomEntry<>(entry1.key, entry2.value);
         CustomEntry<Cell, Product> newEntry2 = new CustomEntry<>(entry2.key, entry1.value);
 
+        //обновляем дату момент размещения в ячейке
+        entry1.key.updateOccupiedStatus(true);
+        entry2.key.updateOccupiedStatus(true);
+
         customEntries.add(newEntry1);
         customEntries.add(newEntry2);
 
@@ -301,7 +305,7 @@ public class GeneticSolution extends Solution {
         double[] probabilities = new double[rankedPopulation.size()];
         double total = 0.0;
 
-        // Создаём массив вероятностей выбора
+        // Создаем массив вероятностей выбора
         for (int i = 0; i < rankedPopulation.size(); i++) {
             probabilities[i] = 1.0 / (i + 1); // Чем выше ранг, тем больше вероятность
             total += probabilities[i];

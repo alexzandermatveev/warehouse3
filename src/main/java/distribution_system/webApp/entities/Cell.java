@@ -1,6 +1,5 @@
 package distribution_system.webApp.entities;
 
-import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.Getter;
 import lombok.ToString;
 
